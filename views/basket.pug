@@ -1,0 +1,7 @@
+shopping-basket(data-id=`${basket.userId}`)
+  ul.basket-items
+    for item in basket.items
+      basket-item
+        li.basket-item
+          h3= item.name
+          span.amount= item.amount
