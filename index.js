@@ -10,11 +10,17 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use(cookieParser())
 
-const store = { baskets: [] }
-
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'))
 
 app.set('view engine', 'pug')
+
+const store = { baskets: [] }
+
+const totalPrice = (basket) => Object.keys(basket.items)
+  .reduce((memo, curr) => {
+    const item = basket.items[curr]
+    return memo + (parseInt(item.amount) * parseFloat(item.price))
+  }, 0)
 
 app.get('/basket', (req, res) => {
   const accept = accepts(req)
@@ -26,7 +32,7 @@ app.get('/basket', (req, res) => {
   switch (accept.type(['html', 'json'])) {
     case 'html':
       res.setHeader('Content-Type', 'text/html')
-      res.status(200).render('basket', { basket })
+      res.status(200).render('basket', { basket, totalPrice: totalPrice(basket) })
       break
     case 'json':
       res.setHeader('Content-Type', 'application/json')
@@ -50,6 +56,7 @@ app.post('/basket', (req, res) => {
   basket.items = basket.items || {}
   basket.items[req.body.id] = {
     amount: parseInt(req.body.amount),
+    price: req.body.price,
     name: req.body.name
   }
 

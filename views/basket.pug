@@ -6,4 +6,6 @@ shopping-basket(data-id=`${basket.userId}`)
         li.basket-item
           = item.name
           = " "
-          span.amount (#{item.amount})
+          span.amount (#{item.amount}x #{item.price})
+
+  p.summary #{totalPrice} EUR
