@@ -4,6 +4,8 @@ const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const accepts = require('accepts')
 
+const config = require('./package.json').config
+
 const app = express()
 
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -74,5 +76,6 @@ app.use((error, req, res, next) => {
   res.status(500).render('500', { error })
 })
 
-console.log(`start listening on port ${process.env.PORT}`)
-app.listen(process.env.PORT)
+const port = process.env.PORT || config.port
+console.log(`start listening on port ${port}`)
+app.listen(port)
