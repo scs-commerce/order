@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "author": "Falk Hoppe <falkhoppe81@gmail.com>",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "start": "node index.js",
     "watch": "nodemon -e js,pug --watch index.js --watch views --exec 'npm start'"
