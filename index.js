@@ -24,6 +24,26 @@ const totalPrice = (basket) => Object.keys(basket.items)
     return memo + (parseInt(item.amount) * parseFloat(item.price))
   }, 0)
 
+app.get('/basket/new', (req, res) => {
+  const userId = req.cookies['scs-commerce-uid']
+  const basket = store.baskets[userId]
+
+  const product = {
+    id: req.query.id,
+    name: req.query.name,
+    price: req.query.price
+  }
+
+  console.log(req.query)
+
+  const alreadyMarked = basket && basket.items[req.query.id]
+  console.log(alreadyMarked)
+
+  product.amount = alreadyMarked ? alreadyMarked.amount : 1
+
+  res.status(200).render('add-to-basket', { product, alreadyMarked })
+})
+
 app.get('/basket', (req, res) => {
   const accept = accepts(req)
   const userId = req.cookies['scs-commerce-uid']
