@@ -3,8 +3,19 @@ const morgan = require('morgan')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const accepts = require('accepts')
+const fetch = require('node-fetch')
 
 const config = require('./package.json').config
+
+let products = []
+
+// NOTE: order as its standalone domain pillar, keeps necessary
+// product information redundantly in its own storage. (memory for this prototype)
+//
+// TODO: handle not yet loaded products for shopping basket forms
+fetchProducts().then((productList) => {
+  products = productList
+})
 
 const app = express()
 
@@ -24,20 +35,14 @@ const totalPrice = (basket) => Object.keys(basket.items)
     return memo + (parseInt(item.amount) * parseFloat(item.price))
   }, 0)
 
-app.get('/basket/new', (req, res) => {
+app.get('/basket/new', (req, res, next) => {
   const userId = req.cookies['scs-commerce-uid']
   const basket = store.baskets[userId]
+  const queryId = req.query.id && parseInt(req.query.id)
 
-  const product = {
-    id: req.query.id,
-    name: req.query.name,
-    price: req.query.price
-  }
+  const product = products.find(p => p.id === queryId)
 
-  console.log(req.query)
-
-  const alreadyMarked = basket && basket.items[req.query.id]
-  console.log(alreadyMarked)
+  const alreadyMarked = basket && basket.items[queryId]
 
   product.amount = alreadyMarked ? alreadyMarked.amount : 1
 
@@ -48,7 +53,6 @@ app.get('/basket', (req, res) => {
   const accept = accepts(req)
   const userId = req.cookies['scs-commerce-uid']
 
-  console.log('userId:', userId)
   const basket = store.baskets[userId] ? store.baskets[userId] : { userId, items: {} }
 
   switch (accept.type(['html', 'json'])) {
@@ -82,8 +86,6 @@ app.post('/basket', (req, res) => {
     name: req.body.name
   }
 
-  console.log(store.baskets[userId])
-
   res.status(201)
     .redirect(`basket`)
 })
@@ -99,3 +101,17 @@ app.use((error, req, res, next) => {
 const port = process.env.PORT || config.port
 console.log(`start listening on port ${port}`)
 app.listen(port)
+
+function fetchProducts () {
+  const headers = {
+    'Accept': 'application/json'
+  }
+
+  const productsUrl = process.env.PRODUCTS_URL || config.services.products
+
+  return fetch(productsUrl, { headers })
+    .then(res => res.json())
+    .then(content => (content.products || []))
+    .then(products => products.map(p => ({ id: p.id, name: p.name, price: p.price })))
+    .catch(e => console.log(e))
+}
