@@ -1,12 +1,11 @@
 {
   "name": "order",
   "version": "1.0.0",
-  "main": "index.js",
   "author": "Falk Hoppe <falkhoppe81@gmail.com>",
   "license": "Apache-2.0",
   "scripts": {
-    "start": "node index.js",
-    "watch": "nodemon -e js,pug --watch index.js --watch views --exec 'npm start'"
+    "start": "node src/index.js",
+    "watch": "nodemon -e js,pug --watch src/index.js --watch src/views --exec 'npm start'"
   },
   "config": {
     "port": "3002",

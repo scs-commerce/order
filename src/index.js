@@ -5,17 +5,7 @@ const cookieParser = require('cookie-parser')
 const accepts = require('accepts')
 const fetch = require('node-fetch')
 
-const config = require('./package.json').config
-
-let products = []
-
-// NOTE: order as its standalone domain pillar, keeps necessary
-// product information redundantly in its own storage. (memory for this prototype)
-//
-// TODO: handle not yet loaded products for shopping basket forms
-fetchProducts().then((productList) => {
-  products = productList
-})
+const config = require('../package.json').config
 
 const app = express()
 
@@ -26,6 +16,7 @@ app.use(cookieParser())
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'))
 
 app.set('view engine', 'pug')
+app.set('views', 'src/views')
 
 const store = { baskets: [] }
 
@@ -40,13 +31,15 @@ app.get('/basket/new', (req, res, next) => {
   const basket = store.baskets[userId]
   const queryId = req.query.id && parseInt(req.query.id)
 
-  const product = products.find(p => p.id === queryId)
+  fetchProducts().then((products) => {
+    const product = products.find(p => p.id === queryId)
 
-  const alreadyMarked = basket && basket.items[queryId]
+    const alreadyMarked = basket && basket.items[queryId]
 
-  product.amount = alreadyMarked ? alreadyMarked.amount : 1
+    product.amount = alreadyMarked ? alreadyMarked.amount : 1
 
-  res.status(200).render('add-to-basket', { product, alreadyMarked })
+    res.status(200).render('add-to-basket', { product, alreadyMarked })
+  })
 })
 
 app.get('/basket', (req, res) => {
@@ -103,15 +96,25 @@ console.log(`start listening on port ${port}`)
 app.listen(port)
 
 function fetchProducts () {
+  let memoized = null
+
   const headers = {
     'Accept': 'application/json'
   }
 
   const productsUrl = process.env.PRODUCTS_URL || config.services.products
 
+  if (memoized) {
+    return Promise.resolve(memoized)
+  }
+
   return fetch(productsUrl, { headers })
     .then(res => res.json())
     .then(content => (content.products || []))
     .then(products => products.map(p => ({ id: p.id, name: p.name, price: p.price })))
+    .then(products => {
+      memoized = products
+      return products
+    })
     .catch(e => console.log(e))
 }
